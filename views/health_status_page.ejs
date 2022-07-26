@@ -1,0 +1,161 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Document</title>
+
+</head>
+
+<body>
+  <table>
+    <thead>
+      <th>Zone</th>
+      <th>Votes</th>
+      <th>Valid Votes</th>
+      <th>Invalid Votes</th>
+    </thead>
+    <tbody id="putHere"></tbody>
+  </table>
+  
+  
+<script>
+FilterComponentMobileApp = ["App"];
+FilterComponentCPOG = ["CPO, User & OEM Gateway", "CPO based price", "CPOG", "CPOG: adapter-authorization", "CPOG: adapter-billing", "CPOG: adapter-poi-availability", "CPOG: adapter-poi-static-data", "CPOG: billing", "CPOG: cache-provider", "CPOG: cache-update", "CPOG: CAF: caf", "CPOG: CAF: caf-api", "CPOG: charging-authorization", "CPOG: cpodummy-backend", "CPOG: CPOG Portal (APIM)", "CPOG: Diagnostics Portal: Backend", "CPOG: EMP Gateway (APIM)", "CPOG: EMPP: empproxy-router", "CPOG: pnc", "CPOG: poi-remote-control", "CPOG: service"];
+FilterComponentDVS = ["Data Validation"];
+FilterComponentFleet = ["Fleet", "fleet_advancedFeature", "fleet_BasicSelfService", "fleet_batch_upload", "fleet_batchUpload", "fleet_bulkUpload", "fleet_E2EStabilization", "fleet_HomeWorkPlaceCharging", "fleet_multiLevelSaaS", "fleet_multiLevelSaaS", "fleet_newAdvancedFeature", "fleet_rolloutNewCountries", "fleet_rolloutnewcustomer", "fleet_userselfservice"];
+FilterComponentIDM = ["IDM", "IDM AUDI", "IDM BMW GCDM", "IDM Daimler CIAM", "IDM OEMs", "IDM PSA Objektultur"];
+FilterComponentKNIME = ["KNIME"];
+FilterComponentOIAPI = ["OIAPI"];
+FilterComponentOIMW = ["OIMW"];
+FilterComponentOI = ["Open Informer", "Open Infommer", "OpenInformer", "OI", "OI: Backend", "OI: Backend"];
+FilterComponentPOIM = ["POIM", "poim", "POIM_AdminService", "POIM_Importer_Exporter", "POIM: POI Data Administration, Access and Visibility", "POIM: POI Processing", "POIM: POI Processing", "POI Management"];
+FilterComponentWebApp = ["Frontend", "Web", "Web (private/public), Liferay, CMS", "Web-Frontend", "Web Frontent"];
+
+componentTableSetup = [
+  {componentName: "Mobile App", componentFilter: FilterComponentMobileApp},
+  {componentName: "CPOG", componentFilter: FilterComponentCPOG},
+  {componentName: "DVS", componentFilter: FilterComponentDVS},
+  {componentName: "Fleet", componentFilter: FilterComponentFleet},
+  {componentName: "IDM", componentFilter: FilterComponentIDM},
+  {componentName: "KNIME", componentFilter: FilterComponentKNIME},
+  {componentName: "OI API", componentFilter: FilterComponentOIAPI},
+  {componentName: "OI MW", componentFilter: FilterComponentOIMW},
+  {componentName: "OI Core", componentFilter: FilterComponentOI},
+  {componentName: "POIM", componentFilter: FilterComponentPOIM},
+  {componentName: "Web App", componentFilter: FilterComponentWebApp}
+];
+
+const JiraQueryClass1={
+    "jql":"project= DEVCST AND statusCategory != Done AND 'Incident Class (DCS)' = '1 - Class 1, Outage'",
+    "startAt":0,
+    "maxResults":20
+};
+
+const JiraQueryClass2={
+    "jql":"project= DEVCST AND statusCategory != Done AND 'Incident Class (DCS)' = '2 - Class 2, Degradation'",
+    "startAt":0,
+    "maxResults":20
+};
+
+
+function doTest(){
+    console.log("testtesttest");
+    let xhr = new XMLHttpRequest();
+    xhr.open("post", 'https://jira.digitalchargingsolutions.com/rest/api/2/search', true);
+    xhr.setRequestHeader("Authorization", "Bearer NTA4NzcxMjQ4ODU4OmJETlDWEAJazjVCU8hOmMRr1PyO");
+    xhr.withCredentials = true;
+    xhr.onreadystatechange = function(r) {
+        console.log(r.target.status);
+    }
+    xhr.send();
+}
+doTest();
+
+let obj = {};
+
+let xhr = new XMLHttpRequest();
+xhr.open('POST', 'https://jira.digitalchargingsolutions.com/rest/api/2/search', true);
+xhr.setRequestHeader('Content-Type', 'application/json'); 
+xhr.setRequestHeader("Authorization", "Bearer NTA4NzcxMjQ4ODU4OmJETlDWEAJazjVCU8hOmMRr1PyO");
+xhr.withCredentials = true;
+body = JSON.stringify(JiraQueryClass1);
+// request state change event
+xhr.onreadystatechange = function() {
+
+  // request completed?
+  if (xhr.readyState !== 4) return;
+
+  if (xhr.status === 200) {
+    // request successful - show response
+    console.log(xhr.responseText);
+    obj = xhr.response;
+  }
+  else {
+    // request error
+    console.log('HTTP error', xhr.status, xhr.statusText);
+  }
+};
+
+// start request
+xhr.send(body);
+
+var issues = obj.issues;
+
+function getIssuesByComponent(object, componentFilterArray) {
+  let result = object.filter(element => element.fields.components.find(component => componentFilterArray.includes(component.name)));
+  return result;
+};
+
+function getKeysOfIssues(array) {
+  let keyArray = array.map(jiraKey => jiraKey.key)
+  return keyArray
+};
+
+function getComponentsTableData() {
+  var componentTableResult = [];
+  var length = componentTableSetup.length;
+  for (var i = 0; i < length; i++) {
+    filteredIssues = getIssuesByComponent(issues, componentTableSetup[i].componentFilter);
+    component = componentTableSetup[i].componentName;
+    count = filteredIssues.length;
+    if (count == 0) {
+      keys = "";
+    } else {
+      keys = getKeysOfIssues(filteredIssues).toString();
+    }
+    console.log(componentTableSetup[i].componentName);и
+    console.log(filteredIssues.length);
+    console.log(getKeysOfIssues(filteredIssues).toString());
+    componentTableResult.push({
+      componentName: component,
+      issuesCount: count,
+      jiraKeys: keys
+    });
+  }
+  return componentTableResult
+};
+
+tableData = getComponentsTableData();
+
+var html = "";
+tableData.forEach(function(e, i) {
+  html += "<tr>" + "<td>" + e.componentName + "</td>" + 
+                   "<td>" + e.issuesCount + "</td>" + 
+                   "<td>" + e.jiraKeys + "</td>" + "</tr>";
+});
+
+document.getElementById("putHere").innerHTML = html;
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
