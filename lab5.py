@@ -1,33 +1,31 @@
 import numpy as np
 
-# Transition matrix
-P = [[0.8, 0.1, 0.1],
-     [0.2, 0.6, 0.2],
-     [0.1, 0.1, 0.8]]
+l12 = 1
+l23 = 0.5
+l31 = 3
 
-# Initial state
-x = 0
+# Задаємо початкові стани
+T = np.zeros(3)
 
-# Total time
-T = 0
+# Моделюємо перехід між станами
+for i in range(100000):
+    var = i % 3
+    if var == 0:
+        T[var] -= np.log(np.random.rand()) / l12
+    elif var == 1:
+        T[var] -= np.log(np.random.rand()) / l23
+    elif var == 2:
+        T[var] -= np.log(np.random.rand()) / l31
 
-# Total time spent in each state
-j_state_time = [0, 0, 0]
+print("Теорія")
+p1 = 1/(1 + l12/l23 + l12/l31)
+p2 = (l12*p1)/l23
+p3 = (l12*p1)/l31
+print("p1 =", p1)
+print("p2 =", p2)
+print("p3 =", p3)
 
-# Number of transitions
-num_transitions = 1000
-
-for i in range(num_transitions):
-    # Choose a random next state
-    next_state = np.random.choice([0, 1, 2], p=P[x])
-    # Increment time
-    T += 1
-    # Increment time spent in current state
-    j_state_time[x] += 1
-    # Update current state
-    x = next_state
-
-# Calculate experimental probability for each state
-experimental_probability = [j / T for j in j_state_time]
-
-print("Experimental Probability:", experimental_probability)
+print("Практика")
+print("p1 =", T[0]/sum(T))
+print("p2 =", T[1]/sum(T))
+print("p3 =", T[2]/sum(T))
